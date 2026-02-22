@@ -36,13 +36,12 @@ def generate_email(topic, product, audience, tone):
         }
     ]
     
-    # Параметры запроса (в соответствии с документацией gen-api.ru)
+    # Параметры запроса
     payload = {
         "messages": messages,
         "is_sync": True,          # синхронный режим – ответ сразу
         "temperature": 0.7,
         "max_tokens": 2000,
-        # можно добавить другие параметры, если нужно
     }
     
     headers = {
@@ -56,23 +55,16 @@ def generate_email(topic, product, audience, tone):
     
     if response.status_code == 200:
         data = response.json()
-        # Проверяем статус ответа
-        if data.get("status") == "success":
-            # В зависимости от формата ответа, извлекаем текст.
-            # Предположим, что ответ содержит поле "output" с текстом.
-            # Может быть data["output"]["choices"][0]["message"]["content"]
-            # Уточните по документации gen-api.ru.
-            # По аналогии с OpenAI, вероятно:
-            # data["output"]["choices"][0]["message"]["content"]
-            # Но для безопасности проверим.
-            if "output" in data and "choices" in data["output"]:
-                return data["output"]["choices"][0]["message"]["content"]
-            elif "result" in data:
-                return data["result"]
+        # Извлекаем текст из ответа согласно структуре gen-api.ru
+        if "response" in data and len(data["response"]) > 0:
+            # Берём первый вариант генерации (индекс 0)
+            first_response = data["response"][0]
+            if "message" in first_response and "content" in first_response["message"]:
+                return first_response["message"]["content"]
             else:
-                return str(data)
+                raise Exception("Не удалось найти content в ответе: " + str(first_response))
         else:
-            raise Exception(f"Ошибка API: {data}")
+            raise Exception("Нет поля 'response' в ответе: " + str(data))
     else:
         raise Exception(f"HTTP {response.status_code}: {response.text}")
 
