@@ -1,29 +1,38 @@
 import streamlit as st
 import openai
-import json
-import os
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]  # безопасно храним ключ
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-def analyze_text(text):
-    prompt = f"Ты редактор. Оцени текст по шкале от 0 до 10 по параметрам: стиль, структура, эмоции. Дай совет. Текст: {text}"
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3
-    )
-    return response.choices[0].message.content
+st.title("✉️ AI-помощник для email-рассылок")
+st.write("Заполните параметры, и нейросеть напишет письмо за вас.")
 
-st.title("🧠 AI-тренер текстов")
-st.write("Вставьте текст, и я дам обратную связь как опытный редактор.")
+topic = st.text_input("Тема письма", "Анонс новой коллекции")
+product = st.text_area("Описание продукта/акции", "Мы запустили линейку экологичных кроссовок из переработанных материалов.")
+audience = st.text_input("Целевая аудитория", "Молодёжь 20–35 лет, увлекающаяся спортом и экологией")
+tone = st.selectbox("Тон письма", ["дружеский", "формальный", "убеждающий"])
 
-text = st.text_area("Ваш текст", height=150)
-
-if st.button("Проанализировать"):
-    if text:
-        with st.spinner("Думаю..."):
-            result = analyze_text(text)
-        st.success("Готово!")
-        st.write(result)
-    else:
-        st.warning("Сначала введите текст.")
+if st.button("Сгенерировать"):
+    with st.spinner("Нейросеть пишет письмо..."):
+        prompt = f"""
+        Напиши email-письмо для маркетинговой рассылки.
+        Тема: {topic}
+        Продукт: {product}
+        Аудитория: {audience}
+        Тон: {tone}
+        
+        Письмо должно содержать:
+        - заголовок;
+        - приветствие;
+        - основную часть с описанием выгоды;
+        - призыв к действию;
+        - прощание.
+        """
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        email = response.choices[0].message.content
+        st.subheader("Готовое письмо:")
+        st.text_area("Результат", email, height=400)
+        st.button("Копировать", on_click=lambda: st.write("Скопировано (здесь нужен JavaScript)"))  # упрощённо
